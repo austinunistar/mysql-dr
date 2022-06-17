@@ -1,49 +1,33 @@
-- name: setup Mysql with medium_db db and remote login
-  become: yes
-  hosts: mysql
+- hosts: mysql-s
+  become: true
   tasks:
-    - name: Installing Mysql  and dependencies
-      package:
-         name: "{{item}}"
-         state: present
-         update_cache: yes
-      loop:
-        - mysql-server
-        - mysql-client
-        - python3-mysqldb
-        - libmysqlclient-dev
-      become: yes
-       
-    - name: start and enable mysql service
-      service:
-         name: mysql
-         state: started
-         enabled: yes
+          #    - name: Update apt package
+          #      ansible.builtin.shell: "apt update"
+   
+    - name: Set up the repo for mysql 8
+      ansible.builtin.get_url:
+        url:  "https://dev.mysql.com/get/mysql-apt-config_0.8.19-1_all.deb" 
+        dest: /tmp/mysql-apt-config_0.8.19-1_all.deb
 
-    - name: creating mysql user (medium_post)
-      mysql_user:
-         name: "{{db_user}}"
-         password: "{{db_pass}}"
-         priv: '*.*:ALL'
-         host: '%'
-         state: present
-    
-    - name: creating medium_db 
-      mysql_db:
-         name: "{{db_name}}"
-         state: present
-    
-    - name: Enable remote login to mysql
-      lineinfile:
-         path: /etc/mysql/mysql.conf.d/mysqld.cnf
-         regexp: '^bind-address'
-         line: 'bind-address = 0.0.0.0'
-         backup: yes
-      notify:
-        - Restart mysql
+    - name: Configuring mysql-apt-config
+      ansible.builtin.debconf:
+        name: mysql-community-server
+        question: Configuring mysql-apt-config
+        value: <ok>
+        vtype: select
 
-  handlers:
-    - name: Restart mysql
-      service:
-        name: mysql
-        state: restarted
+    - name: Configuring mysql-apt-config
+      ansible.builtin.debconf:
+        name: mysql-community-server
+        question: Which MySQL product do you wish to configure?
+        value: ok
+        vtype: select
+
+    - name: Install the downloaded deb file
+      ansible.builtin.shell: "dpkg -i /tmp/mysql-apt-config_0.8.19-1_all.deb"
+    
+    - name: Add GPG Key
+      ansible.builtin.shell: "apt-key adv --keyserver pgp.mit.edu --recv-keys 3A79BD29"
+      register: apt_key_install
+      until: apt_key_install is succeeded
+

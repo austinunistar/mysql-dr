@@ -1,0 +1,65 @@
+---
+- hosts: mysql
+  become: true
+  tasks:
+  - name: Add atp-key
+    ansible.builtin.shell: "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29"
+
+    #  - name: Update APT Repository
+    #ansible.builtin.shell: "apt update"
+
+  - name: Install APT extras
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      update_cache: yes
+      state: latest
+    loop:
+      - ['dirmngr', 'debconf']
+    
+  - name: Add official MySQL GPG key
+    ansible.builtin.shell: "apt-key adv --keyserver pgp.mit.edu --recv-keys 5072E1F5"
+    register: apt_key_install
+    until: apt_key_install is succeeded
+ 
+  - name: Add MySQL repository for Ubuntu
+    ansible.builtin.apt:
+      deb: https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
+
+  - name: Update APT Repository
+    ansible.builtin.shell: "apt update"
+
+  - name: Set MySQL version
+    ansible.builtin.debconf:
+      name: mysql-community-server
+      question: mysql-apt-config/select-server
+      value: "mysql-8.0"
+      vtype: string
+
+  - name: Set MySQL root password
+    ansible.builtin.debconf:
+      name: mysql-community-server
+      question: mysql-community-server/root-pass
+      value: "finicast"
+      vtype: password
+
+  - name: Confirm MySQL root password
+    ansible.builtin.debconf:
+      name: mysql-community-server
+      question: mysql-community-server/re-root-pass
+      value: "finicast"
+      vtype: password
+
+  - name: Enable Legacy Authentication Method
+    ansible.builtin.debconf:
+      name: mysql-community-server
+      question: mysql-server/default-auth-override
+      value: Use Legacy Authentication Method (Retain MySQL 5.x Compatibility)
+      vtype: select
+
+  - name: Install/Update MySQL 8.0 Community Server
+    ansible.builtin.apt:
+      name: "{{ item }}"
+      update_cache: yes
+      state: latest
+    with_items:
+      - mysql-server
