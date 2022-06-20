@@ -3,10 +3,11 @@
   become: true
   tasks:
   - name: Add atp-key
-    ansible.builtin.shell: "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29"
-
-    #  - name: Update APT Repository
-    #ansible.builtin.shell: "apt update"
+    ansible.builtin.shell: |
+            "apt-key adv --keyserver keyserver.ubuntu.com --recv-keys 467B942D3A79BD29"
+  - name: Update APT Repository
+    ansible.builtin.shell: |
+            "apt update"
 
   - name: Install APT extras
     ansible.builtin.apt:
@@ -17,7 +18,8 @@
       - ['dirmngr', 'debconf']
     
   - name: Add official MySQL GPG key
-    ansible.builtin.shell: "apt-key adv --keyserver pgp.mit.edu --recv-keys 5072E1F5"
+    ansible.builtin.shell: |
+            "apt-key adv --keyserver pgp.mit.edu --recv-keys 5072E1F5"
     register: apt_key_install
     until: apt_key_install is succeeded
  
@@ -63,3 +65,11 @@
       state: latest
     with_items:
       - mysql-server
+  
+  - name: Import phpmyadmin installation
+    include: phpmyadmin.yml
+
+  - name: Show version
+    ansible.builtin.shell: |
+            mysql --version && dpkg -l phpmyadmin
+    

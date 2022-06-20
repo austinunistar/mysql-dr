@@ -1,0 +1,47 @@
+---
+  - name: debconf for pma
+    ansible.builtin.debconf: 
+      name: phpmyadmin 
+      question: 'phpmyadmin/dbconfig-install' 
+      value: 'true' 
+      vtype: 'boolean'
+
+  - name: debconf for pma
+    ansible.builtin.debconf: 
+      name: phpmyadmin 
+      question: 'phpmyadmin/app-password-confirm' 
+      value: 'finicast' 
+      vtype: 'password'
+
+  - name: debconf for pma
+    ansible.builtin.debconf: 
+      name: phpmyadmin 
+      question: 'phpmyadmin/mysql/admin-pass' 
+      value: 'finicast' 
+      vtype: 'password'
+
+  - name: debconf for pma
+    ansible.builtin.debconf: 
+      name: phpmyadmin 
+      question: 'phpmyadmin/mysql/app-pass' 
+      value: 'finicast' 
+      vtype: 'password'
+
+  - name: debconf for pma
+    ansible.builtin.debconf: 
+      name: phpmyadmin 
+      question: 'phpmyadmin/reconfigure-webserver' 
+      value: '' 
+      vtype: 'multiselect'
+
+  - name: install pma
+    ansible.builtin.apt: 
+      pkg: phpmyadmin 
+      state: present
+
+  - name: configure site
+    ansible.builtin.file: 
+      path: /var/www/phpmyadmin 
+      src: /usr/share/phpmyadmin 
+      state: link
+
