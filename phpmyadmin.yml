@@ -1,47 +1,77 @@
 ---
-  - name: debconf for pma
+  - name: debconf for phpmyadmin
     ansible.builtin.debconf: 
       name: phpmyadmin 
       question: 'phpmyadmin/dbconfig-install' 
       value: 'true' 
       vtype: 'boolean'
 
-  - name: debconf for pma
+  - name: debconf for phpmyadmin
     ansible.builtin.debconf: 
       name: phpmyadmin 
       question: 'phpmyadmin/app-password-confirm' 
-      value: 'finicast' 
+      value: "{{ mysql_root_pass }}" 
       vtype: 'password'
 
-  - name: debconf for pma
+  - name: debconf for phpmyadmin
     ansible.builtin.debconf: 
       name: phpmyadmin 
       question: 'phpmyadmin/mysql/admin-pass' 
-      value: 'finicast' 
+      value: "{{ mysql_root_pass }}" 
       vtype: 'password'
 
-  - name: debconf for pma
+  - name: debconf for phpmyadmin
     ansible.builtin.debconf: 
       name: phpmyadmin 
       question: 'phpmyadmin/mysql/app-pass' 
-      value: 'finicast' 
+      value: "{{ mysql_root_pass }}" 
       vtype: 'password'
 
-  - name: debconf for pma
+  - name: debconf for phpmyadmin
     ansible.builtin.debconf: 
       name: phpmyadmin 
       question: 'phpmyadmin/reconfigure-webserver' 
       value: '' 
       vtype: 'multiselect'
 
-  - name: install pma
+  - name: install phpmyadmin
     ansible.builtin.apt: 
       pkg: phpmyadmin 
       state: present
 
   - name: configure site
     ansible.builtin.file: 
-      path: /var/www/phpmyadmin 
-      src: /usr/share/phpmyadmin 
+      path: '/var/www/phpmyadmin' 
+      src: '/usr/share/phpmyadmin' 
       state: link
+
+  - name: add phpmyadmin to apache2.conf
+    ansible.builtin.lineinfile:
+      path: '/etc/apache2/apache2.conf'
+      insertafter: 'KeepAliveTimeout'
+      line: 'Include /etc/phpmyadmin/apache.conf'
+      backup: yes
+
+  - name: restart apache2 service
+    ansible.builtin.service:
+      name: apache2
+      state: restarted
+      enabled: yes
+
+  - name: replace controluser 
+    ansible.builtin.replace:
+      path: '/etc/phpmyadmin/config.inc.php'
+      regexp: \$cfg\['Servers'\]\[\$i\]\['controluser'\] \= \$dbuser;
+      replace: $cfg['Servers'][$i]['controluser'] = 'root';
+      backup: yes
+    tags: replace_php
+
+  - name: replace controlpass
+    ansible.builtin.replace:
+      path: '/etc/phpmyadmin/config.inc.php'
+      regexp: \$cfg\['Servers'\]\[\$i\]\['controlpass'\] \= \$dbpass;
+      replace: $cfg['Servers'][$i]['controlpass'] = 'finicast';
+      backup: yes
+    tags: replace_php
+
 
