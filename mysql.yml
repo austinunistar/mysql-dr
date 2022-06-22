@@ -6,6 +6,15 @@
      mysql_root_pass: 'finicast'
 
   tasks:
+  - name: add official MySQL GPG key for update
+    ansible.builtin.shell: |
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 467B942D3A79BD29
+            
+  - name: update all packages to their latest version
+    ansible.builtin.apt:
+      name: "*"
+      state: latest
+
   - name: install APT extras
     ansible.builtin.apt:
       name: "{{ item }}"
@@ -13,7 +22,7 @@
     loop:
       - ['dirmngr', 'debconf']
 
-  - name: add official MySQL GPG key
+  - name: add official MySQL GPG key for MySQL repository
     ansible.builtin.shell: |
             apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 5072E1F5
     register: apt_key_install
@@ -22,9 +31,12 @@
   - name: add MySQL repository for Ubuntu
     ansible.builtin.apt:
       deb: https://dev.mysql.com/get/mysql-apt-config_0.8.16-1_all.deb
+    ignore_errors: yes
 
-  - name: update APT repository
-    ansible.builtin.shell: "apt update"
+  - name: update all packages to their latest version
+    ansible.builtin.apt:
+      name: "*"
+      state: latest
 
   - name: set MySQL version
     ansible.builtin.debconf:
