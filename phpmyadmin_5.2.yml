@@ -23,10 +23,11 @@
     ansible.builtin.file:
       path: "{{ item }}"
       state: directory
-      mode: '0755' 
+      mode: '0777' 
     loop:
       - /usr/share/phpmyadmin/tmp
       - /etc/phpmyadmin
+      - /var/lib/phpmyadmin/tmp
 
   - name: download latest version of phpMyAdmin 
     ansible.builtin.unarchive:
@@ -40,7 +41,7 @@
     
   - name: mv folder with new name
     ansible.builtin.shell: |
-            mv /tmp/phpMyAdmin-5.2.0-english/ /usr/share/phpmyadmin/
+            mv /tmp/phpMyAdmin-5.2.0-english/* /usr/share/phpmyadmin
     ignore_errors: yes
 
   - name: create phpMyAdmin configuration file
@@ -49,7 +50,7 @@
       dest: '/usr/share/phpmyadmin/config.inc.php'
       owner: 'root'
       group: 'root'
-      mode: '0644'
+      #      mode: '0644'
       remote_src: yes
 
   - name: update phpmyadmin config.inc.php 
