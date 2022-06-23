@@ -84,3 +84,8 @@
 
   - name: import phpmyadmin installation
     include: phpmyadmin.yml
+    tags: pma4.6
+   
+  - name: import phpmyadmin installation
+    include: phpmyadmin_5.2.yml
+    tags: pma5.2

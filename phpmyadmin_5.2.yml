@@ -1,0 +1,74 @@
+---
+  - name: remove old phpmyadmin
+    ansible.builtin.package:
+      package: "{{ item }}"
+      state: absent
+    loop:
+      - phpmyadmin
+
+  - name: install requirement service
+    ansible.builtin.package:
+      package: "{{ item }}"
+      state: present
+    loop:
+      - php 
+      - php-tcpdf
+      - php-cgi
+      - php-pear
+      - php-mbstring
+      - libapache2-mod-php
+      - php-common
+
+  - name: create directory for phpMyAdmin
+    ansible.builtin.file:
+      path: "{{ item }}"
+      state: directory
+      mode: '0755' 
+    loop:
+      - /usr/share/phpmyadmin/tmp
+      - /etc/phpmyadmin
+
+  - name: download latest version of phpMyAdmin 
+    ansible.builtin.unarchive:
+      src: 'https://www.phpmyadmin.net/downloads/phpMyAdmin-latest-english.tar.gz'
+      dest: '/tmp'
+      owner: 'root'
+      group: 'root'
+      remote_src: yes
+    register: package_download
+    until: package_download is succeeded
+    
+  - name: mv folder with new name
+    ansible.builtin.shell: |
+            mv /tmp/phpMyAdmin-5.2.0-english/ /usr/share/phpmyadmin/
+    ignore_errors: yes
+
+  - name: create phpMyAdmin configuration file
+    ansible.builtin.copy:
+      src: '/usr/share/phpmyadmin/config.sample.inc.php'
+      dest: '/usr/share/phpmyadmin/config.inc.php'
+      owner: 'root'
+      group: 'root'
+      mode: '0644'
+      remote_src: yes
+
+  - name: update phpmyadmin config.inc.php 
+    ansible.builtin.replace:
+      path: '/usr/share/phpmyadmin/config.inc.php'
+      regexp: \$cfg\['blowfish_secret'\] \= '';
+      replace: $cfg['blowfish_secret'] = 'H2OxcGXxflSd8JwrwVlh6KW6s2rER63i';
+      backup: yes
+
+  - name: update phpmyadmin config.inc.php
+    ansible.builtin.lineinfile:
+      path: '/usr/share/phpmyadmin/config.inc.php'
+      regexp: declare(strict_types=1); 
+      line: $cfg['TempDir'] = '/var/lib/phpmyadmin/tmp';
+      backup: yes
+
+  - name: restart apache2 service
+    ansible.builtin.service:
+      name: apache2
+      state: restarted
+      enabled: yes
+
