@@ -6,12 +6,21 @@
     loop:
       - phpmyadmin
 
+  - name: add PHP Repository
+    ansible.builtin.shell: |
+      add-apt-repository -y ppa:ondrej/php
+
+  - name: update all packages to their latest version
+    ansible.builtin.apt:
+      name: "*"
+      state: latest
+
   - name: install requirement service
     ansible.builtin.package:
       package: "{{ item }}"
       state: present
     loop:
-      - php 
+      - php8.0
       - php-tcpdf
       - php-cgi
       - php-pear
@@ -50,7 +59,6 @@
       dest: '/usr/share/phpmyadmin/config.inc.php'
       owner: 'root'
       group: 'root'
-      #      mode: '0644'
       remote_src: yes
 
   - name: update phpmyadmin config.inc.php 
