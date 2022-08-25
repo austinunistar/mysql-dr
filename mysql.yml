@@ -6,6 +6,10 @@
      mysql_root_pass: 'finicast'
 
   tasks:
+  - name: add official MySQL GPG key for update
+    ansible.builtin.shell: |
+            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 467B942D3A79BD29
+            
   - name: update all packages to their latest version
     ansible.builtin.apt:
       name: "*"
@@ -18,10 +22,6 @@
     loop:
       - ['dirmngr', 'debconf']
 
-  - name: add official MySQL GPG key for update
-    ansible.builtin.shell: |
-            apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 467B942D3A79BD29
-            
   - name: add official MySQL GPG key for MySQL repository
     ansible.builtin.shell: |
             apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv 5072E1F5
@@ -82,10 +82,5 @@
       login_user: root
       login_password: "{{ mysql_root_pass }}"
 
-      #  - name: import phpmyadmin installation
-      #    include: phpmyadmin.yml
-      #    tags: pma4.6
-   
   - name: import phpmyadmin installation
-    include: phpmyadmin_5.2.yml
-    tags: pma5.2
+    include: phpmyadmin.yml
